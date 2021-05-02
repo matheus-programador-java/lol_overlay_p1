@@ -9,6 +9,7 @@
 
 #include "framework.h"
 #include "lol_overlay_p1.h"
+#include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
@@ -36,6 +37,8 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 string GetChampionJsonFile();
+size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* user_data);
+void GetSpellImg(string pathOutFile);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -203,7 +206,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	SendMessage(hWndComboChamp, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
-	GetChampionJsonFile();
+	string initChamp = GetChampionJsonFile();
+	GetSpellImg(initChamp);
 
 	LPCWSTR result = jsonText.c_str();
 
@@ -249,98 +253,93 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			string pathOutFile;
 			pathOutFile = GetChampionJsonFile();
+			GetSpellImg(pathOutFile);
 
-			// LEITURA DO ARQUIVO - GET SPELLS
-			ifstream file(pathOutFile.c_str());
-			wstring jsonText((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-			file.close();
+			//// LEITURA DO ARQUIVO - GET SPELLS
+			//ifstream file(pathOutFile.c_str());
+			//wstring jsonText((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			//file.close();
 
-			string spells[4];
-			nlohmann::basic_json<> j = json::parse(jsonText);
-			auto data = j["data"];
+			//string spells[4];
+			//nlohmann::basic_json<> j = json::parse(jsonText);
+			//auto data = j["data"];
 
-			for (auto it = data.begin(); it != data.end(); it++)
-			{
-				auto champ = (*it)["spells"];
-				int spellCount = 0;
-				for (auto is = champ.begin(); is != champ.end(); is++)
-				{
-					auto spell = (*is)["image"]["full"].get<string>();
-					spells[spellCount] = spell;
-					spellCount++;
-				}
-			}
+			//for (auto it = data.begin(); it != data.end(); it++)
+			//{
+			//	auto champ = (*it)["spells"];
+			//	int spellCount = 0;
+			//	for (auto is = champ.begin(); is != champ.end(); is++)
+			//	{
+			//		auto spell = (*is)["image"]["full"].get<string>();
+			//		spells[spellCount] = spell;
+			//		spellCount++;
+			//	}
+			//}
 
-			//GET SPELL PNG
-			for (string spell : spells) {
+			////GET SPELL PNG
+			//int spellCount = 0;
+			//for (string spell : spells) {
 
-				IStream* stream;
-				string URL = "http://ddragon.leagueoflegends.com/cdn/11.9.1/img/spell/";
-				URL += spell;
+			//	FILE* fp;
+			//	CURL* curl = curl_easy_init();
+			//	CURLcode res_code;
 
-				CHAR czTempPath[MAX_PATH] = { 0 };
-				GetTempPathA(MAX_PATH, czTempPath);
-				string pathOutFile = czTempPath;
+			//	string URL = "http://ddragon.leagueoflegends.com/cdn/11.9.1/img/spell/";
+			//	URL += spell;
 
-				pathOutFile += spell;
-				ofstream outFile(pathOutFile);
+			//	CHAR czTempPath[MAX_PATH] = { 0 };
+			//	GetTempPathA(MAX_PATH, czTempPath);
 
-				//boolean downloadSpellError = false;
-				//string webJsonF;
-				if (S_OK == URLOpenBlockingStreamA(0, URL.c_str(), &stream, 0, 0))
-				{
-					char buff[100];
-					unsigned long bytesRead;
-					while (true)
-					{
-						memset(&buff, 0, 100);
-						stream->Read(buff, 100, &bytesRead);
+			//	string pathSpellFile = czTempPath;
+			//	string mkDirCommand = "mkdir ";
 
-						if (0U == bytesRead)
-						{
-							break;
-						}
-						outFile << buff;
-						outFile.write(buff, bytesRead);
-						outFile.flush();
-						//webJsonF.append(buff, bytesRead);
-					}
-					outFile.close();
-				}
-				else
-				{
-					MessageBox(NULL, (LPCWSTR)L"Erro ao baixar arquivo de habilidade do campeão!", (LPCWSTR)L"Error!", MB_OK);
-					//downloadSpellError = true;
-				}
+			//	mkDirCommand += czTempPath;
+			//	mkDirCommand += "\\lol_overlay";
+			//	system(mkDirCommand.c_str());
 
-				stream->Release();
+			//	// WRITE SPELL PNG
+			//	string spellBtn;
 
-				////CREATE|OVERWRITE TEMP FILE CAMPEAO.JSON
-				//CHAR czTempPath[MAX_PATH] = { 0 };
-				//GetTempPathA(MAX_PATH, czTempPath);
-				//string pathOutFile = czTempPath;
+			//	switch (spellCount)
+			//	{
+			//	case 0:
+			//		spellBtn = "Q";
+			//		break;
+			//	case 1:
+			//		spellBtn = "W";
+			//		break;
+			//	case 2:
+			//		spellBtn = "E";
+			//		break;
+			//	case 3:
+			//		spellBtn = "R";
+			//		break;
+			//	}
 
-				//pathOutFile += spell;
+			//	pathSpellFile += "\\lol_overlay\\";
+			//	pathSpellFile += spellBtn;
+			//	pathSpellFile += ".png";
+			//	spellCount++;
+			//	fopen_s(&fp, pathSpellFile.c_str(), "wb");
 
-				//ofstream outFile;
-				////CHECK IF CAMPEAO.JSON EXIST IN ERROR CASE.
-				//struct stat statBuf;
+			//	curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
+			//	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback_funtion);
+			//	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+			//	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION);
 
-				//if (downloadSpellError) {
+			//	res_code = curl_easy_perform(curl);
 
-				//	if (stat(pathOutFile.c_str(), &statBuf) == -1) {
-				//		MessageBox(NULL, (LPCWSTR)L"Arquivo de habilidade não existe.", (LPCWSTR)L"Error!", MB_OK);
-				//		PostQuitMessage(1);
-				//		return 1;
-				//	}
-				//}
-				//else
-				//{
-				//	outFile.open(pathOutFile.c_str());
-				//	outFile << webJsonF.c_str();
-				//	outFile.close();
-				//}
-			}
+			//	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_code);
+			//	if (!((res_code == 200 || res_code == 201) && res_code != CURLE_ABORTED_BY_CALLBACK))
+			//	{
+			//		printf("!!! Response code: %d\n", res_code);
+			//		return false;
+			//	}
+
+			//	fclose(fp);
+			//	file.close();
+			//	curl_easy_cleanup(curl);
+			//}
 		}
 
 
@@ -396,15 +395,111 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
+void  GetSpellImg(string pathOutFile) {
+	// LEITURA DO ARQUIVO - GET SPELLS
+	ifstream file(pathOutFile.c_str());
+	wstring jsonText((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	file.close();
+
+	string spells[4];
+	nlohmann::basic_json<> j = json::parse(jsonText);
+	auto data = j["data"];
+
+	for (auto it = data.begin(); it != data.end(); it++)
+	{
+		auto champ = (*it)["spells"];
+		int spellCount = 0;
+		for (auto is = champ.begin(); is != champ.end(); is++)
+		{
+			auto spell = (*is)["image"]["full"].get<string>();
+			spells[spellCount] = spell;
+			spellCount++;
+		}
+	}
+
+	//GET SPELL PNG
+	int spellCount = 0;
+	for (string spell : spells) {
+
+		FILE* fp;
+		CURL* curl = curl_easy_init();
+		CURLcode res_code;
+
+		string URL = "http://ddragon.leagueoflegends.com/cdn/11.9.1/img/spell/";
+		URL += spell;
+
+		CHAR czTempPath[MAX_PATH] = { 0 };
+		GetTempPathA(MAX_PATH, czTempPath);
+
+		string pathSpellFile = czTempPath;
+		string mkDirCommand = "mkdir ";
+
+		mkDirCommand += czTempPath;
+		mkDirCommand += "\\lol_overlay";
+		system(mkDirCommand.c_str());
+
+		// WRITE SPELL PNG
+		string spellBtn;
+
+		switch (spellCount)
+		{
+		case 0:
+			spellBtn = "Q";
+			break;
+		case 1:
+			spellBtn = "W";
+			break;
+		case 2:
+			spellBtn = "E";
+			break;
+		case 3:
+			spellBtn = "R";
+			break;
+		}
+
+		pathSpellFile += "\\lol_overlay\\";
+		pathSpellFile += spellBtn;
+		pathSpellFile += ".png";
+		spellCount++;
+		fopen_s(&fp, pathSpellFile.c_str(), "wb");
+
+		curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback_funtion);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION);
+
+		res_code = curl_easy_perform(curl);
+
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_code);
+		if (!((res_code == 200 || res_code == 201) && res_code != CURLE_ABORTED_BY_CALLBACK))
+		{
+			printf("!!! Response code: %d\n", res_code);
+		}
+
+		fclose(fp);
+		file.close();
+		curl_easy_cleanup(curl);
+	}
+}
+
 string GetChampionJsonFile() {
 	//DOWNLOAD CHAMPION DATA
 	IStream* stream;
+	string champId;
 	wstring s(selectedChamp);
 	string sChampionF(s.begin(), s.end());
-	sChampionF += ".json";
 
 	string URL = "http://ddragon.leagueoflegends.com/cdn/11.9.1/data/pt_BR/champion/";
-	URL += sChampionF;
+	for (auto it = championList.begin(); it != championList.end(); it++) {
+
+		string champ = (*it)["name"].get<string>();
+		if (champ.compare(sChampionF) == 0) {
+			champId = (*it)["id"].get<string>();
+		}
+	}
+
+	champId += ".json";
+	URL += champId;
 
 	boolean selectChampError = false;
 	string webJsonF;
@@ -459,4 +554,17 @@ string GetChampionJsonFile() {
 	}
 
 	return pathOutFile;
+}
+
+size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* userdata)
+{
+	FILE* stream = (FILE*)userdata;
+	if (!stream)
+	{
+		printf("!!! No stream\n");
+		return 0;
+	}
+
+	size_t written = fwrite((FILE*)ptr, size, nmemb, stream);
+	return written;
 }
