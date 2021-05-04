@@ -1,15 +1,15 @@
 #include <Windows.h>
 #include "spell_window.h"
 
-const wchar_t CLASS_NAME[] = L"Sample Window Class";
+const wchar_t CLASS_NAME[] = L"Spell Window";
 HWND hwndSpellWindow;
 
-void ShowSpellWindow(int nCmdShow)
+void ShowSpellWindow(HWND hWnd)
 {
-	ShowWindow(hwndSpellWindow, nCmdShow);
+	AnimateWindow(hwndSpellWindow, 10, AW_BLEND | AW_ACTIVATE);
 }
 
-void CreateSpellWindow(HWND hWndParent, HINSTANCE hInstance)
+HWND CreateSpellWindow(HWND hWndParent, HINSTANCE hInstance)
 {
 
 	WNDCLASS wc = { };
@@ -22,28 +22,32 @@ void CreateSpellWindow(HWND hWndParent, HINSTANCE hInstance)
 	RegisterClass(&wc);
 
 	//CREATE SPELLWINDOW
-	hwndSpellWindow = CreateWindowEx(
+	HWND hWnd = CreateWindowEx(
 		0,                              // Optional window styles.
 		CLASS_NAME,                     // Window class
 		L"Learn to Program Windows",    // Window text
 		WS_OVERLAPPEDWINDOW,            // Window style
 
-		// Size and position
+	   // Size and position
 		CW_USEDEFAULT, CW_USEDEFAULT, 290, 110,
 
-		hWndParent,       // Parent window    
+		NULL,       // Parent window    
 		NULL,       // Menu
 		hInstance,  // Instance handle
 		NULL        // Additional application data
 	);
+
+	hwndSpellWindow = hWnd;
+
+	return hWnd;
 }
 
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
-	case WM_DESTROY:
-		//PostQuitMessage(0);
+	case WM_CLOSE:
+		AnimateWindow(hwndSpellWindow, 10, AW_BLEND | AW_HIDE);
 		return 0;
 
 	case WM_PAINT:

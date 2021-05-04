@@ -34,8 +34,6 @@ TCHAR selectedChamp[256] = {};
 nlohmann::basic_json<> championList;
 string pathSpellImg[4];
 
-//const wchar_t CLASS_NAME[] = L"Sample Window Class";
-
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -135,13 +133,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance; // Store instance handle in our global variable
-
 	//CREATE MAIN WINDOW 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
 	//CREATE SPELLWINDOW
-	CreateSpellWindow(hWnd, hInstance);
+	HWND spwllHwnd = CreateSpellWindow(hWnd, hInstance);
 
 	//CREATE COM HWND's
 	CreateWindowW(L"STATIC", L"Choose your champion:", WS_VISIBLE | WS_CHILD, 10, 10, 200, 100, hWnd, NULL, hInst, NULL);
@@ -243,7 +240,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	UpdateWindow(hWnd);
 	
-	ShowSpellWindow(nCmdShow);
+	ShowWindow(spwllHwnd, nCmdShow);
 
 	return TRUE;
 }
@@ -287,6 +284,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
+
+		case ID_FILE_SPELLWINDOW:
+			ShowSpellWindow(hWnd);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
