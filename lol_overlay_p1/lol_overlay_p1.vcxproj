@@ -145,10 +145,12 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="lol_overlay_p1.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="spell_window.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lol_overlay_p1.cpp" />
+    <ClCompile Include="spell_window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="lol_overlay_p1.rc" />

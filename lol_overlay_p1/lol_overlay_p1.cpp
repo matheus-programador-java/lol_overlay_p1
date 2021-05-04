@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <gdiplus.h>
 #include <cmath>
+#include "spell_window.h"
 
 #pragma comment(lib, "urlmon.lib")
 
@@ -33,6 +34,8 @@ TCHAR selectedChamp[256] = {};
 nlohmann::basic_json<> championList;
 string pathSpellImg[4];
 
+//const wchar_t CLASS_NAME[] = L"Sample Window Class";
+
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -43,6 +46,8 @@ string GetChampionJsonFile();
 size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* user_data);
 void GetSpellImg(string pathOutFile, HWND wHnd);
 void DrawImg(HDC hdc);
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -109,7 +114,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.hInstance = hInstance;
 	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LOLOVERLAYP1));
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 0);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_LOLOVERLAYP1);
 	wcex.lpszClassName = szWindowClass;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -131,10 +136,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance; // Store instance handle in our global variable
 
+	//CREATE MAIN WINDOW 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
-	//  BLOCO NOVO
+	//CREATE SPELLWINDOW
+	CreateSpellWindow(hWnd, hInstance);
+
 	//CREATE COM HWND's
 	CreateWindowW(L"STATIC", L"Choose your champion:", WS_VISIBLE | WS_CHILD, 10, 10, 200, 100, hWnd, NULL, hInst, NULL);
 	HWND hWndComboChamp = CreateWindowW(L"COMBOBOX", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VISIBLE | WS_VSCROLL, 200, 10, 200, 300, hWnd, NULL, hInst, NULL);
@@ -226,16 +234,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	SetWindowTextW(hWndEdit, result);
 
-
-
-
 	if (!hWnd)
 	{
 		return FALSE;
 	}
 
 	ShowWindow(hWnd, nCmdShow);
+
 	UpdateWindow(hWnd);
+	
+	ShowSpellWindow(nCmdShow);
 
 	return TRUE;
 }
@@ -290,7 +298,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code that uses hdc here...
-		//FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW +1));
 		DrawImg(hdc);
 		EndPaint(hWnd, &ps);
 	}
