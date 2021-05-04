@@ -15,6 +15,8 @@
 #include <fstream>
 #include <atlstr.h>
 #include <sys/stat.h>
+#include <gdiplus.h>
+#include <cmath>
 
 #pragma comment(lib, "urlmon.lib")
 
@@ -29,6 +31,7 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 TCHAR selectedChamp[256] = {};
 nlohmann::basic_json<> championList;
+string pathSpellImg[4];
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -38,7 +41,9 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 string GetChampionJsonFile();
 size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* user_data);
-void GetSpellImg(string pathOutFile);
+void GetSpellImg(string pathOutFile, HWND wHnd);
+void DrawImg(HDC hdc);
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -49,6 +54,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	// TODO: Place code here.
+	//Initialize GDI+
+	Gdiplus::GdiplusStartupInput gdiInput;
+	ULONG_PTR gdiToken;
+	Gdiplus::GdiplusStartup(&gdiToken, &gdiInput, nullptr);
+
+
 
 	// Initialize global strings
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -74,6 +85,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
+
+	Gdiplus::GdiplusShutdown(gdiToken);
 
 	return (int)msg.wParam;
 }
@@ -120,7 +133,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
 
 	//  BLOCO NOVO
 	//CREATE COM HWND's
@@ -207,7 +219,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	SendMessage(hWndComboChamp, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	string initChamp = GetChampionJsonFile();
-	GetSpellImg(initChamp);
+	GetSpellImg(initChamp, hWnd);
 
 	LPCWSTR result = jsonText.c_str();
 
@@ -253,93 +265,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			string pathOutFile;
 			pathOutFile = GetChampionJsonFile();
-			GetSpellImg(pathOutFile);
+			GetSpellImg(pathOutFile, hWnd);
 
-			//// LEITURA DO ARQUIVO - GET SPELLS
-			//ifstream file(pathOutFile.c_str());
-			//wstring jsonText((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-			//file.close();
-
-			//string spells[4];
-			//nlohmann::basic_json<> j = json::parse(jsonText);
-			//auto data = j["data"];
-
-			//for (auto it = data.begin(); it != data.end(); it++)
-			//{
-			//	auto champ = (*it)["spells"];
-			//	int spellCount = 0;
-			//	for (auto is = champ.begin(); is != champ.end(); is++)
-			//	{
-			//		auto spell = (*is)["image"]["full"].get<string>();
-			//		spells[spellCount] = spell;
-			//		spellCount++;
-			//	}
-			//}
-
-			////GET SPELL PNG
-			//int spellCount = 0;
-			//for (string spell : spells) {
-
-			//	FILE* fp;
-			//	CURL* curl = curl_easy_init();
-			//	CURLcode res_code;
-
-			//	string URL = "http://ddragon.leagueoflegends.com/cdn/11.9.1/img/spell/";
-			//	URL += spell;
-
-			//	CHAR czTempPath[MAX_PATH] = { 0 };
-			//	GetTempPathA(MAX_PATH, czTempPath);
-
-			//	string pathSpellFile = czTempPath;
-			//	string mkDirCommand = "mkdir ";
-
-			//	mkDirCommand += czTempPath;
-			//	mkDirCommand += "\\lol_overlay";
-			//	system(mkDirCommand.c_str());
-
-			//	// WRITE SPELL PNG
-			//	string spellBtn;
-
-			//	switch (spellCount)
-			//	{
-			//	case 0:
-			//		spellBtn = "Q";
-			//		break;
-			//	case 1:
-			//		spellBtn = "W";
-			//		break;
-			//	case 2:
-			//		spellBtn = "E";
-			//		break;
-			//	case 3:
-			//		spellBtn = "R";
-			//		break;
-			//	}
-
-			//	pathSpellFile += "\\lol_overlay\\";
-			//	pathSpellFile += spellBtn;
-			//	pathSpellFile += ".png";
-			//	spellCount++;
-			//	fopen_s(&fp, pathSpellFile.c_str(), "wb");
-
-			//	curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
-			//	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback_funtion);
-			//	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-			//	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION);
-
-			//	res_code = curl_easy_perform(curl);
-
-			//	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_code);
-			//	if (!((res_code == 200 || res_code == 201) && res_code != CURLE_ABORTED_BY_CALLBACK))
-			//	{
-			//		printf("!!! Response code: %d\n", res_code);
-			//		return false;
-			//	}
-
-			//	fclose(fp);
-			//	file.close();
-			//	curl_easy_cleanup(curl);
-			//}
 		}
 
 
@@ -363,6 +290,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code that uses hdc here...
+		//FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW +1));
+		DrawImg(hdc);
 		EndPaint(hWnd, &ps);
 	}
 	break;
@@ -395,7 +324,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-void  GetSpellImg(string pathOutFile) {
+void  GetSpellImg(string pathOutFile, HWND hWnd) {
 	// LEITURA DO ARQUIVO - GET SPELLS
 	ifstream file(pathOutFile.c_str());
 	wstring jsonText((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -460,8 +389,10 @@ void  GetSpellImg(string pathOutFile) {
 		pathSpellFile += "\\lol_overlay\\";
 		pathSpellFile += spellBtn;
 		pathSpellFile += ".png";
-		spellCount++;
+
+		pathSpellImg[spellCount] = pathSpellFile;
 		fopen_s(&fp, pathSpellFile.c_str(), "wb");
+		spellCount++;
 
 		curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback_funtion);
@@ -480,6 +411,7 @@ void  GetSpellImg(string pathOutFile) {
 		file.close();
 		curl_easy_cleanup(curl);
 	}
+	InvalidateRect(hWnd, NULL, FALSE);
 }
 
 string GetChampionJsonFile() {
@@ -567,4 +499,18 @@ size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* userdata)
 
 	size_t written = fwrite((FILE*)ptr, size, nmemb, stream);
 	return written;
+}
+
+void DrawImg(HDC hdc) {
+	wstring pathI;
+	int heigth = 10;
+
+	for (int i = 0; i < 4; i++) {
+		pathI = wstring(pathSpellImg[i].begin(), pathSpellImg[i].end());
+		Gdiplus::Graphics gf(hdc);
+		Gdiplus::Image gdImage(pathI.c_str());
+		gf.DrawImage(&gdImage, 600, heigth);
+
+		heigth += 90;
+	}
 }
