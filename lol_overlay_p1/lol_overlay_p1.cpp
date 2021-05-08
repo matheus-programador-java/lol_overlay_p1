@@ -18,8 +18,12 @@
 #include <gdiplus.h>
 #include <cmath>
 #include "spell_window.h"
+#include <thread>
+#include <chrono>
+#include <vector>
 
 #pragma comment(lib, "urlmon.lib")
+//#pragma comment(lib, "curl/curl.lib")
 
 #define MAX_LOADSTRING 100
 
@@ -33,6 +37,8 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 TCHAR selectedChamp[256] = {};
 nlohmann::basic_json<> championList;
 string pathSpellImg[4];
+bool exitThread = false;
+HWND hWndEdit;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -44,8 +50,11 @@ string GetChampionJsonFile();
 size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* user_data);
 void GetSpellImg(string pathOutFile, HWND wHnd);
 void DrawImg(HDC hdc);
+HANDLE threadHandle;
+HWND spwllHwnd;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+DWORD WINAPI KeyboardListner(_In_ LPVOID lpParameter);
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -77,9 +86,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LOLOVERLAYP1));
 
-	MSG msg;
+
+	//Thread ketyboard listner
+	int* threadHeap;
+	threadHeap = (int*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(threadHeap));
+
+	if (threadHeap == NULL)
+	{
+		ExitProcess(2);
+	}
+
+	DWORD threadID;
+	threadHandle = CreateThread(NULL, 0, KeyboardListner,
+		0, //Param to thread function 
+		0, &threadID);
+
 
 	// Main message loop:
+	MSG msg;
+
 	while (GetMessage(&msg, nullptr, 0, 0))
 	{
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
@@ -88,6 +113,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
+
+
+	//Need revision.
+	//CloseHandle(threadHandle);
+	//if (threadHeap != NULL)
+		//HeapFree(GetProcessHeap, 0, threadHeap);
+
+
 
 	Gdiplus::GdiplusShutdown(gdiToken);
 
@@ -138,12 +171,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
 	//CREATE SPELLWINDOW
-	HWND spwllHwnd = CreateSpellWindow(hWnd, hInstance);
+	spwllHwnd = CreateSpellWindow(hWnd, hInstance);
 
 	//CREATE COM HWND's
 	CreateWindowW(L"STATIC", L"Choose your champion:", WS_VISIBLE | WS_CHILD, 10, 10, 200, 100, hWnd, NULL, hInst, NULL);
 	HWND hWndComboChamp = CreateWindowW(L"COMBOBOX", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VISIBLE | WS_VSCROLL, 200, 10, 200, 300, hWnd, NULL, hInst, NULL);
-	HWND hWndEdit = CreateWindowW(L"EDIT", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOHSCROLL, 10, 50, 500, 300, hWnd, NULL, hInst, NULL);
+	hWndEdit = CreateWindowW(L"EDIT", NULL, WS_BORDER | WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOHSCROLL, 10, 50, 500, 300, hWnd, NULL, hInst, NULL);
 
 	//DOWNLOAD CHAMPION.JSON
 	IStream* stream;
@@ -237,10 +270,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	ShowWindow(hWnd, nCmdShow);
-
 	UpdateWindow(hWnd);
-	
+
 	ShowWindow(spwllHwnd, nCmdShow);
+	UpdateWindow(spwllHwnd);
 
 	return TRUE;
 }
@@ -282,12 +315,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
+
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 
 		case ID_FILE_SPELLWINDOW:
 			ShowSpellWindow(hWnd);
 			break;
+
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -303,6 +338,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 	case WM_DESTROY:
+		exitThread = true;
 		PostQuitMessage(0);
 		break;
 	default:
@@ -520,4 +556,66 @@ void DrawImg(HDC hdc) {
 
 		heigth += 90;
 	}
+}
+
+DWORD WINAPI KeyboardListner(_In_ LPVOID lpParam)
+{
+	SetWindowText(hWndEdit, L"");
+	std::vector<char> vector;
+	GetVectorOfSpells(&vector);
+	while (!exitThread)
+	{
+		SHORT kCodeReturn = 0;
+		kCodeReturn = GetAsyncKeyState(0x51);// Q key
+		if (kCodeReturn != 0)
+		{
+			vector.push_back('Q');
+
+			SetWindowText(hWndEdit, L"Q");
+			std::cout << "";
+		}
+		kCodeReturn = GetAsyncKeyState(0x57);// W key
+		if (kCodeReturn != 0)
+		{
+			vector.push_back('W');
+
+			SetWindowText(hWndEdit, L"W");
+			std::cout << "";
+		}
+		kCodeReturn = GetAsyncKeyState(0x45);// E key
+		if (kCodeReturn != 0)
+		{
+			vector.push_back('E');
+
+			SetWindowText(hWndEdit, L"E");
+			std::cout << "";
+		}
+		kCodeReturn = GetAsyncKeyState(0x52);// R key
+		if (kCodeReturn != 0)
+		{
+			vector.push_back('R');
+
+			SetWindowText(hWndEdit, L"R");
+			std::cout << "";
+		}
+		kCodeReturn = GetAsyncKeyState(0x44);// D key
+		if (kCodeReturn != 0)
+		{
+			vector.push_back('D');
+
+			SetWindowText(hWndEdit, L"D");
+			std::cout << "";
+		}
+		kCodeReturn = GetAsyncKeyState(0x46);// F key
+		if (kCodeReturn != 0)
+		{
+			vector.push_back('F');
+
+			SetWindowText(hWndEdit, L"F");
+			std::cout << "";
+		}
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
+	}
+
+	return EXIT_SUCCESS;
 }
