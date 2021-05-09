@@ -13,6 +13,7 @@ namespace SpellWnd
 	std::vector<char> vectorOfSpells;
 	std::string* pathSpellImg;
 	int width = 486;
+	bool clearScreen = false;
 
 	void ShowSpellWindow(HWND hWnd)
 	{
@@ -73,11 +74,12 @@ namespace SpellWnd
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
 			int czVec = vectorOfSpells.size();
-			if (czVec >= 7 || czVec == 0)
+			if (czVec >= 7 || czVec == 0 || clearScreen)
 			{
 				FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
 				vectorOfSpells.clear();
 				width = 486;
+				clearScreen = false;
 			}
 			else
 			{
@@ -88,6 +90,12 @@ namespace SpellWnd
 		return 0;
 		}
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
+	void ClearScreen() 
+	{
+		clearScreen = true;
+		InvalidateRect(hwndSpellWindow, NULL, false);
 	}
 
 	void DrawImg(HDC hdc) {

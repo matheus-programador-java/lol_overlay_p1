@@ -566,40 +566,129 @@ DWORD WINAPI KeyboardListner(_In_ LPVOID lpParam)
 	SetWindowText(hWndEdit, L"");
 	std::vector<char>* vector;
 	vector = SpellWnd::GetVectorOfSpells();
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastClick[6];
+	const float minTimeClick = 380;
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
+	bool update = false;
+
 	while (!exitThread)
 	{
 		SHORT kCodeReturn = 0;
 		kCodeReturn = GetAsyncKeyState(0x51);// Q key
 		if (kCodeReturn != 0)
 		{
-			SetWindowText(hWndEdit, L"Q");
-			
-			(*vector).push_back('Q');
-			InvalidateRect(spellHwnd, NULL, FALSE);
+			update = true;
+			lastUpdate = std::chrono::high_resolution_clock::now();
+			if (lastClick[0].time_since_epoch() == std::chrono::steady_clock::duration::zero())
+			{
+
+				SetWindowText(hWndEdit, L"Q");
+
+				(*vector).push_back('Q');
+				InvalidateRect(spellHwnd, NULL, FALSE);
+				lastClick[0] = std::chrono::high_resolution_clock::now();
+			}
+			else
+			{
+				std::chrono::duration<float> duration;
+				duration = std::chrono::high_resolution_clock::now() - lastClick[0];
+				float last = duration.count() * 1000;
+				if (last > minTimeClick)
+				{
+					SetWindowText(hWndEdit, L"Q");
+
+					(*vector).push_back('Q');
+					InvalidateRect(spellHwnd, NULL, FALSE);
+					lastClick[0] = std::chrono::high_resolution_clock::now();
+				}
+			}
 		}
 		kCodeReturn = GetAsyncKeyState(0x57);// W key
 		if (kCodeReturn != 0)
 		{
-			SetWindowText(hWndEdit, L"W");
-		
-			(*vector).push_back('W');
-			InvalidateRect(spellHwnd, NULL, FALSE);
+			update = true;
+			lastUpdate = std::chrono::high_resolution_clock::now();
+			if (lastClick[1].time_since_epoch() == std::chrono::steady_clock::duration::zero())
+			{
+
+				SetWindowText(hWndEdit, L"W");
+
+				(*vector).push_back('W');
+				InvalidateRect(spellHwnd, NULL, FALSE);
+				lastClick[1] = std::chrono::high_resolution_clock::now();
+			}
+			else
+			{
+				std::chrono::duration<float> duration;
+				duration = std::chrono::high_resolution_clock::now() - lastClick[1];
+				float last = duration.count() * 1000;
+				if (last > minTimeClick)
+				{
+					SetWindowText(hWndEdit, L"W");
+
+					(*vector).push_back('W');
+					InvalidateRect(spellHwnd, NULL, FALSE);
+					lastClick[1] = std::chrono::high_resolution_clock::now();
+				}
+			}
 		}
 		kCodeReturn = GetAsyncKeyState(0x45);// E key
 		if (kCodeReturn != 0)
 		{
-			SetWindowText(hWndEdit, L"E");
-		
-			(*vector).push_back('E');
-			InvalidateRect(spellHwnd, NULL, FALSE);
+			update = true;
+			lastUpdate = std::chrono::high_resolution_clock::now();
+			if (lastClick[2].time_since_epoch() == std::chrono::steady_clock::duration::zero())
+			{
+
+				SetWindowText(hWndEdit, L"E");
+
+				(*vector).push_back('E');
+				InvalidateRect(spellHwnd, NULL, FALSE);
+				lastClick[2] = std::chrono::high_resolution_clock::now();
+			}
+			else
+			{
+				std::chrono::duration<float> duration;
+				duration = std::chrono::high_resolution_clock::now() - lastClick[2];
+				float last = duration.count() * 1000;
+				if (last > minTimeClick)
+				{
+					SetWindowText(hWndEdit, L"E");
+
+					(*vector).push_back('E');
+					InvalidateRect(spellHwnd, NULL, FALSE);
+					lastClick[2] = std::chrono::high_resolution_clock::now();
+				}
+			}
 		}
 		kCodeReturn = GetAsyncKeyState(0x52);// R key
 		if (kCodeReturn != 0)
 		{
-			SetWindowText(hWndEdit, L"R");
-		
-			(*vector).push_back('R');
-			InvalidateRect(spellHwnd, NULL, FALSE);
+			update = true;
+			lastUpdate = std::chrono::high_resolution_clock::now();
+			if (lastClick[3].time_since_epoch() == std::chrono::steady_clock::duration::zero())
+			{
+
+				SetWindowText(hWndEdit, L"R");
+
+				(*vector).push_back('R');
+				InvalidateRect(spellHwnd, NULL, FALSE);
+				lastClick[3] = std::chrono::high_resolution_clock::now();
+			}
+			else
+			{
+				std::chrono::duration<float> duration;
+				duration = std::chrono::high_resolution_clock::now() - lastClick[3];
+				float last = duration.count() * 1000;
+				if (last > minTimeClick)
+				{
+					SetWindowText(hWndEdit, L"R");
+
+					(*vector).push_back('R');
+					InvalidateRect(spellHwnd, NULL, FALSE);
+					lastClick[3] = std::chrono::high_resolution_clock::now();
+				}
+			}
 		}
 		kCodeReturn = GetAsyncKeyState(0x44);// D key
 		if (kCodeReturn != 0)
@@ -613,7 +702,19 @@ DWORD WINAPI KeyboardListner(_In_ LPVOID lpParam)
 			SetWindowText(hWndEdit, L"F");
 			(*vector).push_back('F');
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(160));
+
+		if (update)
+		{
+			std::chrono::duration<float> duration;
+			duration = std::chrono::high_resolution_clock::now() - lastUpdate;
+			float last = duration.count();
+			if (last > 18.0f)//Seconds in float to clear spells.
+				update = false;
+		}
+		else
+			SpellWnd::ClearScreen();
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
 	return EXIT_SUCCESS;

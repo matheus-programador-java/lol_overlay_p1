@@ -8,5 +8,6 @@ namespace SpellWnd
 	void DrawImg(HDC hdc);
 	void SetPathSpellImg(std::string* pathSpellArray);
 	std::vector<char>* GetVectorOfSpells();
+	void ClearScreen();
 	//extern std::vector<char> vectorOfSpells;
 }

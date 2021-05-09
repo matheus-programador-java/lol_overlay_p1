@@ -38,4 +38,6 @@ C:\Users\Matheus2\source\repos\lol_overlay_p1\lol_overlay_p1\lol_overlay_p1.cpp(
               _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
               _Alloc=std::allocator<char>
           ]
+  spell_window.cpp
+  Generating Code...
   lol_overlay_p1.vcxproj -> C:\Users\Matheus2\source\repos\lol_overlay_p1\Debug\lol_overlay_p1.exe
