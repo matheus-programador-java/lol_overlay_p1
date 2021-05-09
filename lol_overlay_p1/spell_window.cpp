@@ -74,12 +74,22 @@ namespace SpellWnd
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
 			int czVec = vectorOfSpells.size();
-			if (czVec >= 7 || czVec == 0 || clearScreen)
+			int capSpell = 7;
+			if (czVec > capSpell || czVec == 0 || clearScreen)
 			{
 				FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
 				vectorOfSpells.clear();
 				width = 486;
 				clearScreen = false;
+			}
+			else if (czVec == capSpell)
+			{
+				width = 486;
+				char path = vectorOfSpells[czVec - 1];
+				vectorOfSpells.clear();
+				vectorOfSpells.push_back(path);
+				FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+				DrawImg(hdc);
 			}
 			else
 			{
@@ -92,7 +102,7 @@ namespace SpellWnd
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	void ClearScreen() 
+	void ClearScreen()
 	{
 		clearScreen = true;
 		InvalidateRect(hwndSpellWindow, NULL, false);
@@ -104,6 +114,7 @@ namespace SpellWnd
 		Gdiplus::Graphics gf(hdc);
 
 		for (auto& path : vectorOfSpells)
+		//for(std::vector<char>::reverse_iterator path = vectorOfSpells.rbegin(); path != vectorOfSpells.rend(); path++) 
 		{
 			switch (path)
 			{
