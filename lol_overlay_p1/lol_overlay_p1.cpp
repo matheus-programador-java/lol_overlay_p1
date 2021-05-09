@@ -51,7 +51,7 @@ size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* user_data);
 void GetSpellImg(string pathOutFile, HWND wHnd);
 void DrawImg(HDC hdc);
 HANDLE threadHandle;
-HWND spwllHwnd;
+HWND spellHwnd;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 DWORD WINAPI KeyboardListner(_In_ LPVOID lpParameter);
@@ -171,7 +171,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
 	//CREATE SPELLWINDOW
-	spwllHwnd = CreateSpellWindow(hWnd, hInstance);
+	spellHwnd = SpellWnd::CreateSpellWindow(hWnd, hInstance);
 
 	//CREATE COM HWND's
 	CreateWindowW(L"STATIC", L"Choose your champion:", WS_VISIBLE | WS_CHILD, 10, 10, 200, 100, hWnd, NULL, hInst, NULL);
@@ -272,8 +272,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 
-	ShowWindow(spwllHwnd, nCmdShow);
-	UpdateWindow(spwllHwnd);
+	ShowWindow(spellHwnd, nCmdShow);
+	UpdateWindow(spellHwnd);
 
 	return TRUE;
 }
@@ -320,7 +320,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 
 		case ID_FILE_SPELLWINDOW:
-			ShowSpellWindow(hWnd);
+			SpellWnd::ShowSpellWindow(hWnd);
 			break;
 
 		default:
@@ -454,6 +454,9 @@ void  GetSpellImg(string pathOutFile, HWND hWnd) {
 		file.close();
 		curl_easy_cleanup(curl);
 	}
+
+	SpellWnd::SetPathSpellImg(pathSpellImg);
+
 	InvalidateRect(hWnd, NULL, FALSE);
 }
 
@@ -561,60 +564,56 @@ void DrawImg(HDC hdc) {
 DWORD WINAPI KeyboardListner(_In_ LPVOID lpParam)
 {
 	SetWindowText(hWndEdit, L"");
-	std::vector<char> vector;
-	GetVectorOfSpells(&vector);
+	std::vector<char>* vector;
+	vector = SpellWnd::GetVectorOfSpells();
 	while (!exitThread)
 	{
 		SHORT kCodeReturn = 0;
 		kCodeReturn = GetAsyncKeyState(0x51);// Q key
 		if (kCodeReturn != 0)
 		{
-			vector.push_back('Q');
-
 			SetWindowText(hWndEdit, L"Q");
-			std::cout << "";
+			
+			(*vector).push_back('Q');
+			InvalidateRect(spellHwnd, NULL, FALSE);
 		}
 		kCodeReturn = GetAsyncKeyState(0x57);// W key
 		if (kCodeReturn != 0)
 		{
-			vector.push_back('W');
-
 			SetWindowText(hWndEdit, L"W");
-			std::cout << "";
+		
+			(*vector).push_back('W');
+			InvalidateRect(spellHwnd, NULL, FALSE);
 		}
 		kCodeReturn = GetAsyncKeyState(0x45);// E key
 		if (kCodeReturn != 0)
 		{
-			vector.push_back('E');
-
 			SetWindowText(hWndEdit, L"E");
-			std::cout << "";
+		
+			(*vector).push_back('E');
+			InvalidateRect(spellHwnd, NULL, FALSE);
 		}
 		kCodeReturn = GetAsyncKeyState(0x52);// R key
 		if (kCodeReturn != 0)
 		{
-			vector.push_back('R');
-
 			SetWindowText(hWndEdit, L"R");
-			std::cout << "";
+		
+			(*vector).push_back('R');
+			InvalidateRect(spellHwnd, NULL, FALSE);
 		}
 		kCodeReturn = GetAsyncKeyState(0x44);// D key
 		if (kCodeReturn != 0)
 		{
-			vector.push_back('D');
-
 			SetWindowText(hWndEdit, L"D");
-			std::cout << "";
+			(*vector).push_back('D');
 		}
 		kCodeReturn = GetAsyncKeyState(0x46);// F key
 		if (kCodeReturn != 0)
 		{
-			vector.push_back('F');
-
 			SetWindowText(hWndEdit, L"F");
-			std::cout << "";
+			(*vector).push_back('F');
 		}
-		std::this_thread::sleep_for(std::chrono::microseconds(100));
+		std::this_thread::sleep_for(std::chrono::milliseconds(160));
 	}
 
 	return EXIT_SUCCESS;
