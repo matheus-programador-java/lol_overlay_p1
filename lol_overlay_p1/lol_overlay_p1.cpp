@@ -86,21 +86,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LOLOVERLAYP1));
 
-
-	//Thread ketyboard listner
-	int* threadHeap;
-	threadHeap = (int*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(threadHeap));
-
-	if (threadHeap == NULL)
-	{
-		ExitProcess(2);
-	}
-
+	
 	DWORD threadID;
 	threadHandle = CreateThread(NULL, 0, KeyboardListner,
 		0, //Param to thread function 
 		0, &threadID);
-
 
 	// Main message loop:
 	MSG msg;
@@ -114,16 +104,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 	}
 
-
-	//Need revision.
-	//CloseHandle(threadHandle);
-	//if (threadHeap != NULL)
-		//HeapFree(GetProcessHeap, 0, threadHeap);
-
-
-
+	CloseHandle(threadHandle);
 	Gdiplus::GdiplusShutdown(gdiToken);
-
 	return (int)msg.wParam;
 }
 
@@ -304,7 +286,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			string pathOutFile;
 			pathOutFile = GetChampionJsonFile();
 			GetSpellImg(pathOutFile, hWnd);
-
+			
+			SendMessage((HWND)lParam, (UINT)WM_KILLFOCUS, NULL, NULL);
 		}
 
 
@@ -550,12 +533,15 @@ size_t callback_funtion(void* ptr, size_t size, size_t nmemb, void* userdata)
 void DrawImg(HDC hdc) {
 	wstring pathI;
 	int heigth = 10;
+	int imgSizeMultiplier = 0.5;
 
 	for (int i = 0; i < 4; i++) {
 		pathI = wstring(pathSpellImg[i].begin(), pathSpellImg[i].end());
 		Gdiplus::Graphics gf(hdc);
 		Gdiplus::Image gdImage(pathI.c_str());
-		gf.DrawImage(&gdImage, 600, heigth);
+		Gdiplus::Rect r(600, heigth,86,86);
+		gf.DrawImage(&gdImage, r);
+		//gf.DrawImage(&gdImage, 600, heigth);
 
 		heigth += 90;
 	}
